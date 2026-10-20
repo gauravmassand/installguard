@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from installguard import __version__
-from installguard.cli import EXIT_OK, EXIT_UNIMPLEMENTED, main
+from pkgpatrol import __version__
+from pkgpatrol.cli import EXIT_OK, EXIT_UNIMPLEMENTED, main
 
 
 def test_version_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
@@ -18,7 +18,7 @@ def test_version_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_no_args_prints_help(capsys: pytest.CaptureFixture[str]) -> None:
     assert main([]) == EXIT_OK
-    assert "usage: installguard" in capsys.readouterr().out
+    assert "usage: pkgpatrol" in capsys.readouterr().out
 
 
 def test_parse_subcommand_lists_packages(capsys: pytest.CaptureFixture[str]) -> None:

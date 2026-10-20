@@ -1,4 +1,4 @@
-"""Command-line entry point for installguard.
+"""Command-line entry point for pkgpatrol.
 
 Subcommands:
 
@@ -31,12 +31,12 @@ EXIT_UNIMPLEMENTED = 69
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="installguard",
+        prog="pkgpatrol",
         description="Vet npm and PyPI packages for supply-chain red flags "
         "before they install.",
     )
     parser.add_argument(
-        "--version", action="version", version=f"installguard {__version__}"
+        "--version", action="version", version=f"pkgpatrol {__version__}"
     )
 
     subcommands = parser.add_subparsers(dest="command", metavar="<command>")
@@ -84,7 +84,7 @@ def _cmd_parse(shell_command: str) -> int:
 
 def _unimplemented(name: str) -> int:
     print(
-        f"installguard {name}: not implemented yet.\n"
+        f"pkgpatrol {name}: not implemented yet.\n"
         "Registry lookups are still in development.",
         file=sys.stderr,
     )

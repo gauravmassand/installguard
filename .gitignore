@@ -9,7 +9,7 @@ venv/
 .coverage
 .mypy_cache/
 .ruff_cache/
-.installguard-cache/
+.pkgpatrol-cache/
 .DS_Store
 .env
 .idea/
