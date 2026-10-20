@@ -85,8 +85,7 @@ def _cmd_parse(shell_command: str) -> int:
 def _unimplemented(name: str) -> int:
     print(
         f"installguard {name}: not implemented yet.\n"
-        f"Registry lookups are still in development — see "
-        f"https://github.com/gauravmassand/installguard",
+        "Registry lookups are still in development.",
         file=sys.stderr,
     )
     return EXIT_UNIMPLEMENTED

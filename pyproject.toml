@@ -10,7 +10,9 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "Gaurav Massand" }]
+# No `authors` field: PyPI attributes the project to the uploading account,
+# which is enough. Keeping personal names out of published metadata is
+# deliberate — once a version is published, its metadata is immutable.
 keywords = [
     "supply-chain",
     "security",
@@ -39,10 +41,9 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/gauravmassand/installguard"
+# A single source link, deliberately. Auditability matters for a security
+# tool, so the repository stays; the rest are redundant with it.
 Repository = "https://github.com/gauravmassand/installguard"
-Issues = "https://github.com/gauravmassand/installguard/issues"
-Changelog = "https://github.com/gauravmassand/installguard/releases"
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "ruff>=0.6"]
