@@ -153,49 +153,55 @@ class EcosystemRules:
     value_flags: frozenset[str]
 
 
+# Grouped a few per line rather than one-per-line: these are reference tables
+# copied from each tool's CLI docs, and scanning them for a missing flag is the
+# maintenance task that matters. `fmt: off` fences the whole statement, which
+# is the only level at which ruff format honors it.
+# fmt: off
+_NPM_VALUE_FLAGS = frozenset({
+    "--registry", "--prefix", "-C", "--cache", "--userconfig",
+    "--globalconfig", "--workspace", "-w", "--omit", "--include",
+    "--save-prefix", "--tag", "--access", "--otp", "--loglevel",
+    "--before", "--cpu", "--os", "--node-options", "--script-shell",
+    "--store-dir", "--virtual-store-dir", "--filter", "--config-file",
+    "--cwd", "--dir", "--reporter", "--mode", "--shell", "--call", "-c",
+    "--node-linker", "--resolution-mode",
+})
+
+_PYPI_VALUE_FLAGS = frozenset({
+    "-r", "--requirement", "-c", "--constraint", "-e", "--editable",
+    "-i", "--index-url", "--extra-index-url", "--find-links", "-f",
+    "--target", "-t", "--platform", "--python-version", "--implementation",
+    "--abi", "--root", "--prefix", "--src", "--upgrade-strategy",
+    "--no-binary", "--only-binary", "--progress-bar", "--cert",
+    "--client-cert", "--proxy", "--retries", "--timeout", "--exists-action",
+    "--trusted-host", "--log", "--cache-dir", "--report",
+    "--config-settings", "-C", "--python", "-p", "--index",
+    "--default-index", "--source", "--group", "-G", "--extra", "--with",
+    "--spec", "--pip-args", "--index-strategy", "--keyring-provider",
+})
+# fmt: on
+
+#: npm package names: optional ``@scope/``, no leading dot or underscore.
+#: Case-insensitive — npm rejects uppercase for new packages, but legacy ones
+#: exist, and a 404 from the registry beats silently skipping the lookup.
+_NPM_NAME = re.compile(
+    r"^(?:@[a-z0-9][a-z0-9\-._~]*/)?[a-z0-9][a-z0-9\-._~]*$", re.IGNORECASE
+)
+
+#: PEP 508 project names.
+_PYPI_NAME = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9._\-]*[A-Za-z0-9])?$", re.ASCII)
+
 ECOSYSTEMS: dict[Ecosystem, EcosystemRules] = {
     Ecosystem.NPM: EcosystemRules(
-        # Optional @scope/, no leading dot or underscore. Case-insensitive:
-        # npm rejects uppercase for new packages, but legacy ones exist and a
-        # 404 from the registry is a better answer than silently skipping.
-        name_pattern=re.compile(
-            r"^(?:@[a-z0-9][a-z0-9\-._~]*/)?[a-z0-9][a-z0-9\-._~]*$", re.IGNORECASE
-        ),
+        name_pattern=_NPM_NAME,
         split_target=_split_npm_target,
-        value_flags=frozenset(
-            {
-                "--registry", "--prefix", "-C", "--cache", "--userconfig",
-                "--globalconfig", "--workspace", "-w", "--omit", "--include",
-                "--save-prefix", "--tag", "--access", "--otp", "--loglevel",
-                "--before", "--cpu", "--os", "--node-options",
-                "--script-shell", "--store-dir", "--virtual-store-dir",
-                "--filter", "--config-file", "--cwd", "--dir", "--reporter",
-                "--mode", "--shell", "--call", "-c", "--node-linker",
-                "--resolution-mode",
-            }
-        ),
+        value_flags=_NPM_VALUE_FLAGS,
     ),
     Ecosystem.PYPI: EcosystemRules(
-        name_pattern=re.compile(
-            r"^[A-Za-z0-9](?:[A-Za-z0-9._\-]*[A-Za-z0-9])?$", re.ASCII
-        ),
+        name_pattern=_PYPI_NAME,
         split_target=_split_pypi_target,
-        value_flags=frozenset(
-            {
-                "-r", "--requirement", "-c", "--constraint", "-e",
-                "--editable", "-i", "--index-url", "--extra-index-url",
-                "--find-links", "-f", "--target", "-t", "--platform",
-                "--python-version", "--implementation", "--abi", "--root",
-                "--prefix", "--src", "--upgrade-strategy", "--no-binary",
-                "--only-binary", "--progress-bar", "--cert", "--client-cert",
-                "--proxy", "--retries", "--timeout", "--exists-action",
-                "--trusted-host", "--log", "--cache-dir", "--report",
-                "--config-settings", "-C", "--python", "-p", "--index",
-                "--default-index", "--source", "--group", "-G", "--extra",
-                "--with", "--spec", "--pip-args", "--index-strategy",
-                "--keyring-provider",
-            }
-        ),
+        value_flags=_PYPI_VALUE_FLAGS,
     ),
 }
 
@@ -240,13 +246,13 @@ class Manager:
 
 # npm ships a long list of `install` aliases, including typo-tolerant ones.
 # `it` / `install-test` / `cit` / `install-ci-test` install *and* run tests.
-_NPM_INSTALL_ALIASES = frozenset(
-    {
-        "install", "i", "add", "in", "ins", "inst", "insta", "instal",
-        "isnt", "isnta", "isntal", "isntall",
-        "install-test", "it", "install-ci-test", "cit",
-    }
-)
+# fmt: off
+_NPM_INSTALL_ALIASES = frozenset({
+    "install", "i", "add", "in", "ins", "inst", "insta", "instal",
+    "isnt", "isnta", "isntal", "isntall",
+    "install-test", "it", "install-ci-test", "cit",
+})
+# fmt: on
 
 _DLX_PACKAGE_FLAGS = frozenset({"-p", "--package"})
 
@@ -280,12 +286,8 @@ MANAGERS: dict[str, Manager] = {
         manifest_subcommands=frozenset({"install"}),
         empty_is_manifest=True,
     ),
-    "pip": Manager(
-        "pip", Ecosystem.PYPI, install_subcommands=frozenset({"install"})
-    ),
-    "pip3": Manager(
-        "pip3", Ecosystem.PYPI, install_subcommands=frozenset({"install"})
-    ),
+    "pip": Manager("pip", Ecosystem.PYPI, install_subcommands=frozenset({"install"})),
+    "pip3": Manager("pip3", Ecosystem.PYPI, install_subcommands=frozenset({"install"})),
     "pipx": Manager(
         "pipx",
         Ecosystem.PYPI,
@@ -365,14 +367,14 @@ _WRAPPERS = frozenset({"sudo", "command", "exec", "time", "nohup", "nice", "doas
 
 #: Wrapper flags that consume a value (``sudo -u root npm i …``). Without
 #: these, `-u` is read as the command name and the install goes undetected.
-_WRAPPER_VALUE_FLAGS = frozenset(
-    {
-        "-u", "--user", "-g", "--group", "-U", "--other-user",
-        "-p", "--prompt", "-C", "--close-from", "-D", "--chdir",
-        "-R", "--chroot", "-r", "--role", "-t", "--type",
-        "-n", "--adjustment",
-    }
-)
+# fmt: off
+_WRAPPER_VALUE_FLAGS = frozenset({
+    "-u", "--user", "-g", "--group", "-U", "--other-user",
+    "-p", "--prompt", "-C", "--close-from", "-D", "--chdir",
+    "-R", "--chroot", "-r", "--role", "-t", "--type",
+    "-n", "--adjustment",
+})
+# fmt: on
 
 #: Executable suffixes to trim on Windows-style invocations.
 _EXE_SUFFIXES = (".exe", ".cmd", ".bat")
@@ -549,15 +551,18 @@ def _identify(tokens: list[str]) -> _Invocation | None:
 # ---------------------------------------------------------------------------
 
 #: Prefixes marking a target with no registry metadata to check.
+# fmt: off
 _NON_REGISTRY_PREFIXES = (
     "./", "../", "/", "~/", ".\\", "..\\",
-    "git+", "git:", "http://", "https://", "file:", "ssh://", "github:",
-    "gitlab:", "bitbucket:", "gist:", "npm:", "link:", "workspace:",
-    "portal:", "patch:", "exec:", "svn+", "hg+", "bzr+",
+    "git+", "git:", "http://", "https://", "file:", "ssh://",
+    "github:", "gitlab:", "bitbucket:", "gist:", "npm:",
+    "link:", "workspace:", "portal:", "patch:", "exec:",
+    "svn+", "hg+", "bzr+",
 )
 _ARCHIVE_SUFFIXES = (
     ".tgz", ".tar.gz", ".tar.bz2", ".tar", ".zip", ".whl", ".egg", ".tar.xz",
 )
+# fmt: on
 
 
 def _is_non_registry_target(token: str) -> bool:
@@ -644,9 +649,7 @@ def _build_specs(
             continue
         seen.add(key)
         specs.append(
-            PackageSpec(
-                name=name, ecosystem=ecosystem, version_spec=version, raw=token
-            )
+            PackageSpec(name=name, ecosystem=ecosystem, version_spec=version, raw=token)
         )
 
     return specs, skipped

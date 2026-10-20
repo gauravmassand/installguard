@@ -41,9 +41,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     subcommands = parser.add_subparsers(dest="command", metavar="<command>")
 
-    check = subcommands.add_parser(
-        "check", help="vet one or more named packages"
-    )
+    check = subcommands.add_parser("check", help="vet one or more named packages")
     check.add_argument("packages", nargs="+", metavar="PACKAGE")
     check.add_argument(
         "-e",
@@ -56,9 +54,7 @@ def build_parser() -> argparse.ArgumentParser:
     subcommands.add_parser(
         "hook", help="run as a Claude Code PreToolUse hook (reads stdin)"
     )
-    subcommands.add_parser(
-        "init", help="configure the hook in ~/.claude/settings.json"
-    )
+    subcommands.add_parser("init", help="configure the hook in ~/.claude/settings.json")
 
     show = subcommands.add_parser(
         "parse", help="show what the parser extracts from a shell command"

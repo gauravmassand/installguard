@@ -23,6 +23,7 @@ def only(command: str):
 # npm family
 # --------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize(
     "command",
     [
@@ -97,6 +98,7 @@ def test_npm_workspace_flag() -> None:
 # Manifest installs (no named packages)
 # --------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize(
     "command",
     [
@@ -124,6 +126,7 @@ def test_pip_requirements_file_is_manifest() -> None:
 # --------------------------------------------------------------------------
 # PyPI family
 # --------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize(
     "command",
@@ -184,6 +187,7 @@ def test_pip_upgrade_flag() -> None:
 # Targets we cannot vet
 # --------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize(
     "command",
     [
@@ -217,6 +221,7 @@ def test_local_path_alongside_real_package() -> None:
 # --------------------------------------------------------------------------
 # Shell structure
 # --------------------------------------------------------------------------
+
 
 def test_chained_with_and() -> None:
     assert names("cd app && npm install lodash") == ["lodash"]
@@ -265,6 +270,7 @@ def test_deduplicates_repeated_package() -> None:
 # Execute-without-install runners
 # --------------------------------------------------------------------------
 
+
 def test_npx_is_vetted() -> None:
     assert names("npx create-react-app") == ["create-react-app"]
     assert only("npx create-react-app").manager == "npx"
@@ -283,6 +289,7 @@ def test_uvx() -> None:
 # --------------------------------------------------------------------------
 # Non-installs must not be detected
 # --------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize(
     "command",
@@ -315,6 +322,7 @@ def test_unbalanced_quote_does_not_crash() -> None:
 # Regressions. Each of these shipped as a bug; the first three failed *open*,
 # silently vetting nothing, which is the worst outcome for this tool.
 # --------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize("flag", ["-f", "--force", "-t", "-g", "-D", "-E", "-S"])
 def test_npm_boolean_flags_do_not_swallow_package(flag: str) -> None:
