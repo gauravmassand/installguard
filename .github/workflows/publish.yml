@@ -136,7 +136,7 @@ jobs:
       contents: read
     steps:
       - name: Download verified distributions
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist-${{ needs.verify.outputs.version }}
           path: dist/
