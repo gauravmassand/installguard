@@ -1,0 +1,168 @@
+name: Publish
+
+# Manual only. Publishing is irreversible — a version number consumed on PyPI
+# can never be reused, even after deleting the release — so this never fires
+# from a push or a tag. You pick the target and confirm the version by hand.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Where to publish"
+        required: true
+        type: choice
+        default: testpypi
+        options:
+          - testpypi
+          - pypi
+      dry_run:
+        description: "Build and run all checks, but do not upload"
+        required: false
+        type: boolean
+        default: true
+      expected_version:
+        description: "Version you intend to publish (e.g. 0.1.0). Must match pyproject, or the run fails."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.14"
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install build tooling
+        run: python -m pip install --upgrade pip build twine
+
+      - name: Read version from pyproject
+        id: version
+        run: |
+          version=$(python -c "
+          import tomllib, pathlib
+          data = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
+          print(data['project']['version'])
+          ")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "pyproject version: $version"
+
+      - name: Confirm version matches what you asked to publish
+        run: |
+          # Guards against publishing a stale checkout, or forgetting to bump.
+          actual="${{ steps.version.outputs.version }}"
+          expected="${{ inputs.expected_version }}"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::You asked to publish '$expected' but pyproject.toml says '$actual'."
+            exit 1
+          fi
+          echo "Version confirmed: $actual"
+
+      - name: Refuse to reuse an existing version
+        run: |
+          # PyPI versions are immutable. Catch the collision here, with a clear
+          # message, rather than as an opaque 400 from the upload endpoint.
+          version="${{ steps.version.outputs.version }}"
+          if [ "${{ inputs.target }}" = "pypi" ]; then
+            host="https://pypi.org"
+          else
+            host="https://test.pypi.org"
+          fi
+          code=$(curl -sS -o /dev/null -w '%{http_code}' "$host/pypi/installguard/$version/json")
+          if [ "$code" = "200" ]; then
+            echo "::error::installguard $version already exists on $host and cannot be replaced. Bump the version."
+            exit 1
+          fi
+          echo "Version $version is free on $host (HTTP $code)."
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Check distribution metadata
+        run: python -m twine check --strict dist/*
+
+      - name: Verify the wheel installs and its console script runs
+        run: |
+          # twine check validates metadata but never imports anything. A wheel
+          # whose entry point raises ModuleNotFoundError passes every other
+          # gate, so install it clean and actually invoke it.
+          python -m venv /tmp/verify
+          /tmp/verify/bin/python -m pip install --quiet dist/*.whl
+          /tmp/verify/bin/installguard --version
+          /tmp/verify/bin/installguard parse 'npm i left-pad'
+
+      - name: Verify no runtime dependencies crept in
+        run: |
+          deps=$(/tmp/verify/bin/python - <<'PY'
+          import importlib.metadata as md
+          print("\n".join(md.requires("installguard") or []))
+          PY
+          )
+          runtime=$(printf '%s\n' "$deps" | grep -v 'extra ==' | grep -v '^$' || true)
+          if [ -n "$runtime" ]; then
+            echo "::error::Unexpected runtime dependencies: $runtime"
+            exit 1
+          fi
+          echo "Confirmed: no runtime dependencies."
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ steps.version.outputs.version }}
+          path: dist/
+
+  publish:
+    name: publish to ${{ inputs.target }}
+    needs: verify
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    # The environment is what gates this: add a required reviewer to either
+    # environment in repo settings and the upload waits for approval.
+    environment:
+      name: ${{ inputs.target }}
+      url: ${{ inputs.target == 'pypi' && format('https://pypi.org/project/installguard/{0}', needs.verify.outputs.version) || format('https://test.pypi.org/project/installguard/{0}', needs.verify.outputs.version) }}
+    permissions:
+      id-token: write # OIDC token for PyPI trusted publishing
+      contents: read
+    steps:
+      - name: Download verified distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ needs.verify.outputs.version }}
+          path: dist/
+
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # No API token: trusted publishing exchanges the OIDC identity of
+          # this workflow for a short-lived upload token. Nothing to leak.
+          repository-url: ${{ inputs.target == 'pypi' && 'https://upload.pypi.org/legacy/' || 'https://test.pypi.org/legacy/' }}
+          print-hash: true
+
+  summary:
+    name: summary
+    needs: [verify, publish]
+    if: always() && needs.verify.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report
+        run: |
+          version="${{ needs.verify.outputs.version }}"
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "### Dry run passed for installguard $version" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "All checks green. Nothing was uploaded." >> "$GITHUB_STEP_SUMMARY"
+            echo "Re-run with **dry_run unchecked** to publish to \`${{ inputs.target }}\`." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Published installguard $version to ${{ inputs.target }}" >> "$GITHUB_STEP_SUMMARY"
+          fi
