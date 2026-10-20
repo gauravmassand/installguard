@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "installguard"
+name = "pkgpatrol"
 version = "0.1.0"
 description = "Vet npm and PyPI packages for supply-chain red flags before they install — as a Claude Code PreToolUse hook or a standalone CLI."
 readme = "README.md"
@@ -43,16 +43,16 @@ dependencies = []
 [project.urls]
 # A single source link, deliberately. Auditability matters for a security
 # tool, so the repository stays; the rest are redundant with it.
-Repository = "https://github.com/gauravmassand/installguard"
+Repository = "https://github.com/gauravmassand/pkgpatrol"
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "ruff>=0.6"]
 
 [project.scripts]
-installguard = "installguard.cli:main"
+pkgpatrol = "pkgpatrol.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["installguard"]
+packages = ["pkgpatrol"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

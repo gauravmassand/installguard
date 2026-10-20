@@ -1,4 +1,4 @@
-"""installguard — vet packages for supply-chain red flags before they install.
+"""pkgpatrol — vet packages for supply-chain red flags before they install.
 
 Runs as a Claude Code ``PreToolUse`` hook that inspects ``Bash`` commands for
 package installs, or as a standalone CLI. Stdlib only, no runtime dependencies.

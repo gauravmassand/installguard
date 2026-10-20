@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # installguard has zero runtime dependencies, so GitHub Actions are the only
+  # pkgpatrol has zero runtime dependencies, so GitHub Actions are the only
   # third-party code in this repo — and a compromised action is exactly the
   # supply-chain attack this tool exists to catch. Keep them current.
   - package-ecosystem: github-actions

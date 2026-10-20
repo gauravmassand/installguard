@@ -1,8 +1,8 @@
-# installguard
+# pkgpatrol
 
 Vet npm and PyPI packages for supply-chain red flags **before** they install.
 
-installguard hooks into Claude Code's `PreToolUse` event, watches for package
+pkgpatrol hooks into Claude Code's `PreToolUse` event, watches for package
 installs in `Bash` commands, and checks each package against the npm registry,
 PyPI, and [deps.dev](https://deps.dev) — surfacing known advisories,
 suspiciously new or unpopular packages, and likely typosquats. The intent is
@@ -18,10 +18,10 @@ clients, report, and hook integration are not built yet.
 
 | Command | What it does | State |
 | --- | --- | --- |
-| `installguard parse '<cmd>'` | Show what the parser extracts from a shell command. No network calls. | **Working** |
-| `installguard check <pkg>` | Vet named packages against the registries. | Not implemented |
-| `installguard hook` | Read a `PreToolUse` payload on stdin and allow/deny. | Not implemented |
-| `installguard init` | Write hook config into `~/.claude/settings.json`. | Not implemented |
+| `pkgpatrol parse '<cmd>'` | Show what the parser extracts from a shell command. No network calls. | **Working** |
+| `pkgpatrol check <pkg>` | Vet named packages against the registries. | Not implemented |
+| `pkgpatrol hook` | Read a `PreToolUse` payload on stdin and allow/deny. | Not implemented |
+| `pkgpatrol init` | Write hook config into `~/.claude/settings.json`. | Not implemented |
 
 Unimplemented subcommands exit non-zero with a clear message. They do not
 silently succeed — a security tool that appears to run but checks nothing is
@@ -41,7 +41,7 @@ Requires Python 3.10 or newer.
 ## Try the parser
 
 ```console
-$ installguard parse 'cd app && npm i -D @types/node@20 lodash && pip install -r reqs.txt httpx'
+$ pkgpatrol parse 'cd app && npm i -D @types/node@20 lodash && pip install -r reqs.txt httpx'
 npm (npm)
   package  @types/node@20
   package  lodash

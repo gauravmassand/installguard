@@ -47,7 +47,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # One interpreter version, three platforms. installguard is
+        # One interpreter version, three platforms. pkgpatrol is
         # stdlib-only, so OS differences (path separators, encodings) are the
         # risk worth spending jobs on — not interpreter minor versions.
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -68,11 +68,11 @@ jobs:
       - name: Verify zero runtime dependencies
         shell: bash
         run: |
-          # installguard must stay importable with nothing but the stdlib.
+          # pkgpatrol must stay importable with nothing but the stdlib.
           # If a runtime dep ever lands in pyproject.toml, fail loudly here.
           deps=$(python - <<'PY'
           import importlib.metadata as md
-          print("\n".join(md.requires("installguard") or []))
+          print("\n".join(md.requires("pkgpatrol") or []))
           PY
           )
           runtime=$(printf '%s\n' "$deps" | grep -v 'extra ==' | grep -v '^$' || true)
@@ -110,7 +110,7 @@ jobs:
           # console script raises ModuleNotFoundError passes every other gate,
           # so check it explicitly.
           python -m pip install dist/*.whl
-          installguard --version
+          pkgpatrol --version
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7

@@ -11,7 +11,7 @@ lookup decide.
 
 Local and VCS targets (``./pkg``, ``git+https://…``, ``foo.tgz``,
 ``-r requirements.txt``) are deliberately *not* returned — there is no registry
-metadata to check, so they fall outside what installguard can vet.
+metadata to check, so they fall outside what pkgpatrol can vet.
 
 Layout
 ------
