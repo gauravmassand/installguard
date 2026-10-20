@@ -1,0 +1,25 @@
+version: 2
+updates:
+  # installguard has zero runtime dependencies, so GitHub Actions are the only
+  # third-party code in this repo — and a compromised action is exactly the
+  # supply-chain attack this tool exists to catch. Keep them current.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "ci"
+    labels: ["dependencies", "github-actions"]
+
+  # Covers the `dev` extra (pytest). Grouped so it is one PR, not several.
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "deps"
+    labels: ["dependencies", "python"]
+    groups:
+      dev-dependencies:
+        patterns: ["*"]

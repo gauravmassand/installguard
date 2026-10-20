@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push: # every branch, not just main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Cancels superseded runs on the same ref, so rapid pushes don't queue up.
+  # A branch that also has an open PR will run twice (once per event); that's
+  # free on public repos and worth the simpler trigger.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Single source of truth for the version CI and local dev both use.
+  # `requires-python` in pyproject.toml is a separate concern: it is the
+  # floor for *users* installing the package, not the version we build on.
+  PYTHON_VERSION: "3.14"
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # One interpreter version, three platforms. installguard is
+        # stdlib-only, so OS differences (path separators, encodings) are the
+        # risk worth spending jobs on — not interpreter minor versions.
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Verify zero runtime dependencies
+        shell: bash
+        run: |
+          # installguard must stay importable with nothing but the stdlib.
+          # If a runtime dep ever lands in pyproject.toml, fail loudly here.
+          deps=$(python - <<'PY'
+          import importlib.metadata as md
+          print("\n".join(md.requires("installguard") or []))
+          PY
+          )
+          runtime=$(printf '%s\n' "$deps" | grep -v 'extra ==' | grep -v '^$' || true)
+          if [ -n "$runtime" ]; then
+            echo "::error::Unexpected runtime dependencies:"
+            printf '%s\n' "$runtime"
+            exit 1
+          fi
+          echo "Confirmed: no runtime dependencies."
+
+      - name: Run tests
+        run: python -m pytest tests/ -v
+
+  build:
+    name: build distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+
+      - name: Check package metadata
+        run: python -m twine check --strict dist/*
+
+      - name: Verify the console script resolves
+        run: |
+          # twine check does not confirm entry points import. A wheel whose
+          # console script raises ModuleNotFoundError passes every other gate,
+          # so check it explicitly.
+          python -m pip install dist/*.whl
+          installguard --version
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/

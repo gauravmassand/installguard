@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "installguard"
+version = "0.1.0"
+description = "Vet npm and PyPI packages for supply-chain red flags before they install — as a Claude Code PreToolUse hook or a standalone CLI."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Gaurav Massand" }]
+keywords = [
+    "supply-chain",
+    "security",
+    "npm",
+    "pypi",
+    "claude-code",
+    "hook",
+    "typosquat",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    # No "License ::" classifier — PEP 639 makes the `license` expression above
+    # and legacy license classifiers mutually exclusive, and PyPI rejects
+    # uploads carrying both. `twine check` does not catch it; only upload does.
+    "Operating System :: OS Independent",
+    # Supported versions are declared once, in `requires-python` above —
+    # classifiers are display-only and would just drift out of sync.
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+# Zero runtime dependencies — stdlib only (urllib, json, concurrent.futures).
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/gauravmassand/installguard"
+Repository = "https://github.com/gauravmassand/installguard"
+Issues = "https://github.com/gauravmassand/installguard/issues"
+Changelog = "https://github.com/gauravmassand/installguard/releases"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+installguard = "installguard.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["installguard"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
