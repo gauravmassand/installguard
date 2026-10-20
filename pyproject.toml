@@ -45,7 +45,7 @@ Issues = "https://github.com/gauravmassand/installguard/issues"
 Changelog = "https://github.com/gauravmassand/installguard/releases"
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "ruff>=0.6"]
 
 [project.scripts]
 installguard = "installguard.cli:main"
@@ -55,3 +55,21 @@ packages = ["installguard"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes — unused imports, undefined names
+    "W",    # pycodestyle warnings
+    "I",    # isort — import ordering
+    "UP",   # pyupgrade — outdated syntax for the target version
+    "B",    # flake8-bugbear — likely bugs
+    "SIM",  # flake8-simplify
+    "RET",  # flake8-return
+    "ARG",  # unused arguments
+    "C4",   # flake8-comprehensions
+]
